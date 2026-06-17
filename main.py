@@ -5,11 +5,16 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from tensorflow import keras
 
 OPTIMIZERS = [
-    keras.optimizers.SGD(learning_rate=0.01)
+    keras.optimizers.SGD(learning_rate=0.01),
+    keras.optimizers.Adam(learning_rate=0.001),
 ]
 
 EPOCHS = 100
 BATCH_SIZE = 16
+
+
+def optimizer_name(opt) -> str:
+    return opt.__class__.__name__
 
 
 def build_model(optimizer, input_dim: int, num_classes: int) -> keras.Model:
