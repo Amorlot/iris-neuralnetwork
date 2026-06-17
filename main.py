@@ -1,0 +1,76 @@
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from tensorflow import keras
+
+OPTIMIZERS = [
+    keras.optimizers.SGD(learning_rate=0.01)
+]
+
+EPOCHS = 100
+BATCH_SIZE = 16
+
+
+def build_model(optimizer, input_dim: int, num_classes: int) -> keras.Model:
+    model = keras.Sequential([
+        keras.layers.Input(shape=(input_dim,)),
+        keras.layers.Dense(16, activation="relu"),
+        keras.layers.Dense(16, activation="relu"),
+        keras.layers.Dense(num_classes, activation="softmax"),
+    ])
+    model.compile(
+        optimizer=optimizer,
+        loss="categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+
+def main():
+    iris = load_iris()
+    X, y = iris.data, iris.target.reshape(-1, 1)
+
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    encoder = OneHotEncoder(sparse_output=False)
+    y = encoder.fit_transform(y)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    results = []
+
+    for opt in OPTIMIZERS:
+        name = optimizer_name(opt)
+        print(f"\n{'='*50}")
+        print(f"  Optimizer: {name}")
+        print(f"{'='*50}")
+
+        model = build_model(opt, input_dim=X_train.shape[1], num_classes=y.shape[1])
+        history = model.fit(
+            X_train, y_train,
+            epochs=EPOCHS,
+            batch_size=BATCH_SIZE,
+            validation_split=0.1,
+            verbose=2,
+        )
+
+        loss, acc = model.evaluate(X_test, y_test, verbose=0)
+        best_val_acc = max(history.history["val_accuracy"])
+        results.append((name, acc, loss, best_val_acc))
+        print(f"  => test acc={acc:.4f}  loss={loss:.4f}  best_val_acc={best_val_acc:.4f}")
+
+    print(f"\n{'='*60}")
+    print(f"{'OPTIMIZER':<22} {'TEST ACC':>10} {'TEST LOSS':>10} {'BEST VAL':>10}")
+    print(f"{'-'*60}")
+    results.sort(key=lambda r: r[1], reverse=True)
+    for name, acc, loss, best_val in results:
+        print(f"{name:<22} {acc:>10.4f} {loss:>10.4f} {best_val:>10.4f}")
+    print(f"{'='*60}")
+
+
+if __name__ == "__main__":
+    main()
