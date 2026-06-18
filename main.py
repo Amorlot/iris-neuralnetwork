@@ -70,15 +70,16 @@ def main():
     X, y = iris.data, iris.target.reshape(-1, 1)
     y_raw = iris.target  # label originali per stratify
 
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
-
     encoder = OneHotEncoder(sparse_output=False)
     y = encoder.fit_transform(y)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y_raw
     )
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)  # fit solo su train
+    X_test = scaler.transform(X_test)
 
     results = []
     histories = {}
