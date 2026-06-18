@@ -57,10 +57,12 @@ Input(4) → Dense(16, ReLU) → Dense(16, ReLU) → Dense(3, Softmax)
 
 ## Risultati
 
-| Optimizer | Test Accuracy |
-|---|---|
-| SGD (lr=0.01) | ~96-97% |
-| Adam (lr=0.001) | ~93-97% |
+Seed fisso (`tf.random.set_seed(42)`) + `stratify` + scaler fittato solo su train.
+
+| Optimizer | Test Accuracy | Test Loss | Best Val Accuracy |
+|---|---|---|---|
+| SGD (lr=0.01) | 90.00% | 0.3045 | 91.67% |
+| Adam (lr=0.001) | 96.67% | 0.1312 | 100.00% |
 
 ---
 
