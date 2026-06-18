@@ -12,6 +12,9 @@ Progetto didattico che applica una rete neurale multi-layer al dataset Iris per 
 iris-keras/
 ├── main.py          # Addestramento e valutazione della rete neurale
 ├── eda.py           # Analisi esplorativa con grafici (EDA)
+├── api/
+│   └── app.py       # Server Flask con endpoint REST per la predizione
+├── test_api.py      # Test degli endpoint REST (richiede il server attivo)
 ├── Dockerfile       # Container per eseguire il progetto
 └── requirements.txt # Dipendenze Python
 ```
@@ -87,12 +90,96 @@ docker run --rm -v $(pwd)/output:/app/output iris-keras python eda.py
 
 ---
 
+## API REST (Flask)
+
+Gli endpoint implementano una **pipeline a stati**: devono essere chiamati nell'ordine indicato. Il server risponde `409 Conflict` se un endpoint viene invocato fuori sequenza.
+
+### Endpoint
+
+| # | Metodo | Endpoint | Descrizione |
+|---|---|---|---|
+| — | `GET` | `/health` | Stato del server e step corrente |
+| — | `GET` | `/status` | Step corrente e prossimo step atteso |
+| 1 | `POST` | `/data/load` | Carica e preprocessa il dataset Iris |
+| 2 | `POST` | `/model/configure` | Sceglie optimizer, learning rate, epoche |
+| 3 | `POST` | `/model/build` | Costruisce l'architettura della rete |
+| 4 | `POST` | `/model/train` | Addestra il modello |
+| 5 | `POST` | `/predict` | Predice la specie (ripetibile) |
+
+### Ordine obbligatorio degli endpoint
+
+```
+POST /data/load
+POST /model/configure
+POST /model/build
+POST /model/train
+POST /predict        ← ripetibile quante volte si vuole
+```
+
+### Avviare il server
+
+```bash
+python api/app.py
+```
+
+Il server si avvia su `http://localhost:5000` con stato `idle`.
+
+### Esempio: sequenza completa con curl
+
+```bash
+# 1. Carica il dataset
+curl -X POST http://localhost:5000/data/load
+
+# 2. Configura l'optimizer (adam o sgd)
+curl -X POST http://localhost:5000/model/configure \
+     -H "Content-Type: application/json" \
+     -d '{"optimizer": "adam", "learning_rate": 0.001, "epochs": 100, "batch_size": 16}'
+
+# 3. Costruisce il modello
+curl -X POST http://localhost:5000/model/build
+
+# 4. Addestra (~30s)
+curl -X POST http://localhost:5000/model/train
+
+# 5. Predici
+curl -X POST http://localhost:5000/predict \
+     -H "Content-Type: application/json" \
+     -d '{"features": [5.1, 3.5, 1.4, 0.2]}'
+```
+
+Risposta di `/predict`:
+
+```json
+{
+  "predicted_class": "setosa",
+  "probabilities": {
+    "setosa": 0.997412,
+    "versicolor": 0.001831,
+    "virginica": 0.000757
+  }
+}
+```
+
+### Eseguire i test
+
+Con il server già in esecuzione:
+
+```bash
+python test_api.py
+```
+
+`test_api.py` percorre l'intera pipeline nell'ordine corretto e verifica anche che le chiamate fuori sequenza restituiscano `409`.
+
+---
+
 ## Avvio senza Docker
 
 ```bash
 pip install -r requirements.txt
-python main.py   # training
-python eda.py    # grafici EDA
+python main.py          # training con confronto optimizer
+python eda.py           # grafici EDA
+python api/app.py       # server REST
+python test_api.py      # test degli endpoint (server deve essere attivo)
 ```
 
 ---
@@ -106,3 +193,5 @@ python eda.py    # grafici EDA
 - pandas 2.2.2
 - matplotlib 3.9.0
 - seaborn 0.13.2
+- flask 3.0.3
+- requests 2.32.3
