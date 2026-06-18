@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py eda.py ./
+COPY main.py eda.py plot.py ./
 COPY api/ ./api/
 
 EXPOSE 5000

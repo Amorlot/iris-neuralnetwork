@@ -1,10 +1,11 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from tensorflow import keras
+
+from plot import plot_val_vs_test
 
 tf.random.set_seed(42)
 
@@ -35,34 +36,6 @@ def build_model(optimizer, input_dim: int, num_classes: int) -> keras.Model:
     )
     return model
 
-
-def _plot_results(histories: dict):
-    """Plot val_accuracy curves with a horizontal dashed line for the final test accuracy."""
-    colors = {"SGD": "#e07b39", "Adam": "#4c72b0"}
-    fig, ax = plt.subplots(figsize=(9, 5))
-
-    for name, (history, test_acc) in histories.items():
-        color = colors.get(name, None)
-        epochs = range(1, len(history.history["val_accuracy"]) + 1)
-        ax.plot(epochs, history.history["val_accuracy"],
-                label=f"{name} — val accuracy", color=color)
-        ax.axhline(test_acc, linestyle="--", color=color,
-                   label=f"{name} — test accuracy ({test_acc:.2%})")
-
-    ax.set_title("Val Accuracy (per epoca) vs Test Accuracy finale")
-    ax.set_xlabel("Epoca")
-    ax.set_ylabel("Accuracy")
-    ax.set_ylim(0, 1.05)
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    fig.tight_layout()
-
-    import os
-    os.makedirs("output", exist_ok=True)
-    path = "output/plot_val_vs_test.png"
-    fig.savefig(path, dpi=150)
-    print(f"\nGrafico salvato in {path}")
-    plt.close(fig)
 
 
 def main():
@@ -113,7 +86,7 @@ def main():
         print(f"{name:<22} {acc:>10.4f} {loss:>10.4f} {best_val:>10.4f}")
     print(f"{'='*60}")
 
-    _plot_results(histories)
+    plot_val_vs_test(histories)
 
 
 if __name__ == "__main__":
