@@ -66,12 +66,34 @@ Input(4) → Dense(16, ReLU) → Dense(16, ReLU) → Dense(3, Softmax)
 
 ## Avvio con Docker
 
+### Da Docker Hub (consigliato)
+
+```bash
+# Scarica l'immagine
+docker pull amorlot/iris-keras
+
+# Esegui il training (main.py)
+docker run --rm amorlot/iris-keras
+
+# Avvia il server Flask
+docker run --rm -p 5000:5000 amorlot/iris-keras python api/app.py
+
+# Esegui l'EDA — genera i grafici PNG in ./output
+mkdir -p output
+docker run --rm -v $(pwd)/output:/app/output amorlot/iris-keras python eda.py
+```
+
+### Build locale
+
 ```bash
 # Build
 docker build -t iris-keras .
 
 # Esegui il training (main.py)
 docker run --rm iris-keras
+
+# Avvia il server Flask
+docker run --rm -p 5000:5000 iris-keras python api/app.py
 
 # Esegui l'EDA — genera i grafici PNG in ./output
 mkdir -p output
